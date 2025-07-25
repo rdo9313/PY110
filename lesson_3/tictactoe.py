@@ -7,7 +7,6 @@ COMPUTER_MARKER = 'O'
 CENTER_SQUARE = 5
 WINNING_MARKER_COUNT = 3
 MATCH_POINT = 5
-
 WINNING_LINES = [
         [1, 2, 3], [4, 5, 6], [7, 8, 9],
         [1, 4, 7], [2, 5, 8], [3, 6, 9],
@@ -21,15 +20,16 @@ def clear_screen():
     os.system('clear')
 
 def wait_for_input():
-    input("Press any key to continue:")
+    input("Press enter to continue:")
 
 def ask_play_again():
     clear_screen()
     prompt("Would you like to play again? (y/n)")
 
-def display_board(board):
+def display_board(board, score):
     clear_screen()
 
+    prompt(f"Player: {score["player"]} - Computer: {score["computer"]}")
     prompt(f"You are {PLAYER_MARKER}. Computer is {COMPUTER_MARKER}.")
     print('     |     |')
     print(f"  {board[1]}  |  {board[2]}  |  {board[3]}")
@@ -73,9 +73,8 @@ def determine_winner(board):
 
     return None
 
-def display_results(winner, score):
+def display_results(winner):
     prompt(f"{winner.capitalize()} wins!" if winner else "It's a tie!")
-    prompt(f"Player: {score["player"]} - Computer: {score["computer"]}")
     wait_for_input()
 
 def empty_squares(board):
@@ -119,8 +118,10 @@ def validate_player(start):
     return start
 
 def choose_square(board, player):
-    return player_chooses_square(board) if player == "player" \
-           else computer_chooses_square(board)
+    if player == "player":
+        player_chooses_square(board)
+    else:
+        computer_chooses_square(board)
 
 def choose_random_square(board):
     return random.choice(empty_squares(board))
@@ -204,7 +205,7 @@ def play_tic_tac_toe():
             board = initialize_board()
 
             while True:
-                display_board(board)
+                display_board(board, score)
                 choose_square(board, current_player)
                 current_player = alternate_player(current_player)
 
@@ -213,8 +214,8 @@ def play_tic_tac_toe():
 
             winner = determine_winner(board)
             update_score(winner, score)
-            display_board(board)
-            display_results(winner, score)
+            display_board(board, score)
+            display_results(winner)
 
             if end_of_match(score):
                 break
