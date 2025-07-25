@@ -74,8 +74,8 @@ def determine_winner(board):
     return None
 
 def display_results(winner, score):
-    prompt(f"{winner.capitalize()} wins!") if winner else prompt("It's a tie!")
-    prompt(f"The score is Player: {score["player"]} - Computer: {score["computer"]}")
+    prompt(f"{winner.capitalize()} wins!" if winner else "It's a tie!")
+    prompt(f"Player: {score["player"]} - Computer: {score["computer"]}")
     wait_for_input()
 
 def empty_squares(board):
@@ -107,7 +107,7 @@ def validate_player(start):
     conversion = {'p': 'player', 'c': 'computer', 'r': 'random'}
 
     while start not in ['player', 'computer', 'random', 'p', 'c', 'r']:
-        prompt("Please input a valid choice ((p)layer, (c)omputer, (r)andom): ")
+        prompt("Please input a valid choice ((p)layer, (c)omputer, (r)andom):")
         start = input().strip().lower()
 
     if len(start) == 1:
@@ -119,7 +119,8 @@ def validate_player(start):
     return start
 
 def choose_square(board, player):
-    return player_chooses_square(board) if player == "player" else computer_chooses_square(board)
+    return player_chooses_square(board) if player == "player" \
+           else computer_chooses_square(board)
 
 def choose_random_square(board):
     return random.choice(empty_squares(board))
@@ -132,10 +133,10 @@ def computer_chooses_square(board):
     board[square] = COMPUTER_MARKER
 
 def find_at_risk_square(board, line, marker):
-    marker_line = [board[num] for num in line]
+    markers = [board[num] for num in line]
 
-    if marker_line.count(marker) == 2 and marker_line.count(INITIAL_MARKER) == 1:
-        return line[marker_line.index(INITIAL_MARKER)]
+    if markers.count(marker) == 2 and markers.count(INITIAL_MARKER) == 1:
+        return line[markers.index(INITIAL_MARKER)]
 
     return None
 
@@ -206,14 +207,17 @@ def play_tic_tac_toe():
                 display_board(board)
                 choose_square(board, current_player)
                 current_player = alternate_player(current_player)
-                if end_of_game(board): break
+
+                if end_of_game(board):
+                    break
 
             winner = determine_winner(board)
             update_score(winner, score)
             display_board(board)
             display_results(winner, score)
 
-            if end_of_match(score): break
+            if end_of_match(score):
+                break
 
         ask_play_again()
         play_again = retrieve_yes_or_no()
