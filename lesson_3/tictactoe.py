@@ -26,10 +26,12 @@ def ask_play_again():
     clear_screen()
     prompt("Would you like to play again? (y/n)")
 
-def display_board(board, score):
+def display_score(score):
+    prompt(f"Player: {score["player"]} - Computer: {score["computer"]}")
+
+def display_board(board):
     clear_screen()
 
-    prompt(f"Player: {score["player"]} - Computer: {score["computer"]}")
     prompt(f"You are {PLAYER_MARKER}. Computer is {COMPUTER_MARKER}.")
     print('     |     |')
     print(f"  {board[1]}  |  {board[2]}  |  {board[3]}")
@@ -73,7 +75,8 @@ def determine_winner(board):
 
     return None
 
-def display_results(winner):
+def display_results(winner, score):
+    display_score(score)
     prompt(f"{winner.capitalize()} wins!" if winner else "It's a tie!")
     wait_for_input()
 
@@ -205,7 +208,7 @@ def play_tic_tac_toe():
             board = initialize_board()
 
             while True:
-                display_board(board, score)
+                display_board(board)
                 choose_square(board, current_player)
                 current_player = alternate_player(current_player)
 
@@ -214,8 +217,8 @@ def play_tic_tac_toe():
 
             winner = determine_winner(board)
             update_score(winner, score)
-            display_board(board, score)
-            display_results(winner)
+            display_board(board)
+            display_results(winner, score)
 
             if end_of_match(score):
                 break
