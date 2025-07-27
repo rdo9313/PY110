@@ -1,8 +1,13 @@
-import pdb
+# refactor main loop if you can
+# pylint this shit
+
 import random
 import os
 
+MATCH_POINT = 5
 FACE_VALUE = 10
+ACE_VALUE = 11
+DEALER_STAY = 17
 TWENTY_ONE = 21
 RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
 SUITS = ['♠', '♣', '♥', '♦']
@@ -14,6 +19,7 @@ def clear_screen():
     os.system("clear")
 
 def wait_for_input():
+    print("")
     input("Press enter to continue:")
 
 def ask_play_again():
@@ -48,12 +54,12 @@ def calculate_total(hand):
         if rank in face_cards:
             total += FACE_VALUE
         elif rank == "A":
-            if (total + 11) > 21:
-                total += 1
-            else:
-                total += 11
+            total += ACE_VALUE
         else:
             total += int(rank)
+
+    if "A" in ranks and total > TWENTY_ONE:
+        total -= FACE_VALUE
 
     return total
 
@@ -69,6 +75,10 @@ def shuffle(deck):
 def reset_hands(dealer, player):
     dealer.clear()
     player.clear()
+
+def reset_score(score):
+    for player in score:
+        score[player] = 0
 
 def busted(hand):
     return calculate_total(hand) > TWENTY_ONE
@@ -86,7 +96,7 @@ def deal_two_cards(deck, hand):
 
 def display_total(dealer, player):
     if len(dealer) == 1:
-        prompt(f"Dealer's total is ?")
+        prompt("Dealer's total is ?")
     else:
         prompt(f"Dealer's total is {calculate_total(dealer)}.")
 
@@ -94,7 +104,7 @@ def display_total(dealer, player):
     display_underline()
 
 def extract_ranks(hand):
-    return [card[0] for card in hand]
+    return [rank for rank, _ in hand]
 
 def join_cards(hand):
     if len(hand) == 1:
@@ -150,67 +160,92 @@ def display_winner(winner):
     else:
         prompt("It's a tie!")
 
+def display_score(score):
+    player_score = score["player"]
+    dealer_score = score["dealer"]
+
+    if player_score == MATCH_POINT:
+        prompt(f"Player wins the match {player_score}:{dealer_score}!")
+    elif dealer_score == MATCH_POINT:
+        prompt(f"Dealer wins the match {dealer_score}:{player_score}!")
+    elif player_score > dealer_score:
+        prompt(f"Player is leading {player_score}:{dealer_score}")
+    elif dealer_score > player_score:
+        prompt(f"Dealer is leading {dealer_score}:{player_score}")
+    else:
+        prompt(f"It is currently tied {player_score}:{dealer_score}")
+
+def update_score(score, winner):
+    if winner in score.keys():
+        score[winner] += 1
+
 def play_twenty_one():
     player_hand = []
     dealer_hand = []
+    score = {'player': 0, 'dealer': 0}
     display_greeting()
 
     while True:
-        deck = initialize_deck()
-        shuffle(deck)
-        reset_hands(dealer_hand, player_hand)
-        deal_starting_cards(deck, dealer_hand, player_hand)
-
+        reset_score(score)
         while True:
+            deck = initialize_deck()
+            shuffle(deck)
+            reset_hands(dealer_hand, player_hand)
+            deal_starting_cards(deck, dealer_hand, player_hand)
+
+            while True:
+                display_all_hands(dealer_hand, player_hand)
+                display_total(dealer_hand, player_hand)
+                action = validate_decision(retrieve_hit_or_stay())
+
+                if action == "hit":
+                    deal_one_card(deck, player_hand)
+
+                if action == "stay" or busted(player_hand):
+                    break
+
             display_all_hands(dealer_hand, player_hand)
             display_total(dealer_hand, player_hand)
-            action = validate_decision(retrieve_hit_or_stay())
 
-            if action == "hit":
-                deal_one_card(deck, player_hand)
+            if busted(player_hand):
+                prompt("Player busts. Dealer wins!")
+                update_score(score, 'dealer')
+                display_score(score)
+                wait_for_input()
+                continue
 
-            if action == "stay" or busted(player_hand):
-                break
-
-        display_all_hands(dealer_hand, player_hand)
-        display_total(dealer_hand, player_hand)
-
-        if busted(player_hand):
-            prompt("Player busts. Dealer wins!")
-            wait_for_input()
-
-            ask_play_again()
-            play_again = retrieve_yes_or_no()
-
-            if not play_again:
-                break
-
-            continue
-        else:
             prompt("Player chose to stay!")
             wait_for_input()
 
-        while True:
             deal_one_card(deck, dealer_hand)
+            while True:
+                display_all_hands(dealer_hand, player_hand)
+                display_total(dealer_hand, player_hand)
+
+                if calculate_total(dealer_hand) < DEALER_STAY:
+                    prompt("Dealer hits.")
+                    deal_one_card(deck, dealer_hand)
+                    wait_for_input()
+
+                if calculate_total(dealer_hand) >= DEALER_STAY or busted(dealer_hand):
+                    break
+
             display_all_hands(dealer_hand, player_hand)
             display_total(dealer_hand, player_hand)
-            if calculate_total(dealer_hand) < 17:
-                prompt("Dealer hits.")
-                deal_one_card(deck, dealer_hand)
-                wait_for_input()
 
-            if calculate_total(dealer_hand) >= 17 or busted(dealer_hand):
+            if busted(dealer_hand):
+                prompt("Dealer busts. Player wins!")
+                update_score(score, "player")
+                display_score(score)
+            else:
+                winner = determine_winner(dealer_hand, player_hand)
+                display_winner(winner)
+                update_score(score, winner)
+                display_score(score)
+            wait_for_input()
+
+            if max(score.values()) == MATCH_POINT:
                 break
-
-        display_all_hands(dealer_hand, player_hand)
-        display_total(dealer_hand, player_hand)
-
-        if busted(dealer_hand):
-            prompt("Dealer busts. Player wins!")
-        else:
-            winner = determine_winner(dealer_hand, player_hand)
-            display_winner(winner)
-        wait_for_input()
 
         ask_play_again()
         play_again = retrieve_yes_or_no()

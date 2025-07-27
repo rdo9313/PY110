@@ -23,7 +23,6 @@ def wait_for_input():
     input("Press enter to continue:")
 
 def ask_play_again():
-    clear_screen()
     prompt("Would you like to play again? (y/n)")
 
 def display_score(score):
@@ -74,6 +73,15 @@ def determine_winner(board):
             return "computer"
 
     return None
+
+def determine_final_winner(score):
+    for key, value in score.items():
+        if value == 5:
+            return key
+
+def display_winner(winner):
+    clear_screen()
+    prompt(f"{winner.capitalize()} is the final winner!")
 
 def display_results(winner, score):
     display_score(score)
@@ -223,6 +231,7 @@ def play_tic_tac_toe():
             if end_of_match(score):
                 break
 
+        display_winner(determine_final_winner(score))
         ask_play_again()
         play_again = retrieve_yes_or_no()
 
