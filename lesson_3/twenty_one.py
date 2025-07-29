@@ -60,8 +60,9 @@ def calculate_total(hand):
         else:
             total += int(rank)
 
-    if "A" in ranks and total > TWENTY_ONE:
-        total -= FACE_VALUE
+    for _ in range(ranks.count('A')):
+        if total > TWENTY_ONE:
+            total -= FACE_VALUE
 
     return total
 
@@ -77,10 +78,6 @@ def shuffle(deck):
 def reset_hands(dealer, player):
     dealer.clear()
     player.clear()
-
-def reset_score(score):
-    for player in score:
-        score[player] = 0
 
 def busted(hand):
     return calculate_total(hand) > TWENTY_ONE
@@ -230,43 +227,50 @@ def update_score(score, winner):
     if winner in score:
         score[winner] += 1
 
+def determine_round_winner(deck, dealer_hand, player_hand):
+    winner = None
+    player_turn(deck, dealer_hand, player_hand)
+
+    if busted(player_hand):
+        winner = "player_bust"
+    else:
+        display_player_stay()
+
+    if not busted(player_hand):
+        dealer_turn(deck, dealer_hand, player_hand)
+
+    if busted(dealer_hand):
+        winner = "dealer_bust"
+
+    if no_busts(winner):
+        winner = determine_winner(dealer_hand, player_hand)
+
+    return winner
+
+def play_match(dealer_hand, player_hand, score):
+    while True:
+        deck = initialize_deck()
+        reset_hands(dealer_hand, player_hand)
+        deal_starting_cards(deck, dealer_hand, player_hand)
+
+        winner = determine_round_winner(deck, dealer_hand, player_hand)
+
+        display_winner(winner)
+        update_score(score, winner)
+        display_score(score)
+
+        if game_over(score):
+            break
+
 def play_twenty_one():
     player_hand = []
     dealer_hand = []
-    score = {'player': 0, 'dealer': 0}
     display_greeting()
 
     while True:
-        reset_score(score)
+        score = {'player': 0, 'dealer': 0}
 
-        while True:
-            deck = initialize_deck()
-            winner = None
-            reset_hands(dealer_hand, player_hand)
-            deal_starting_cards(deck, dealer_hand, player_hand)
-
-            player_turn(deck, dealer_hand, player_hand)
-
-            if busted(player_hand):
-                winner = "player_bust"
-            else:
-                display_player_stay()
-
-            if not busted(player_hand):
-                dealer_turn(deck, dealer_hand, player_hand)
-
-            if busted(dealer_hand):
-                winner = "dealer_bust"
-
-            if no_busts(winner):
-                winner = determine_winner(dealer_hand, player_hand)
-
-            display_winner(winner)
-            update_score(score, winner)
-            display_score(score)
-
-            if game_over(score):
-                break
+        play_match(dealer_hand, player_hand, score)
 
         ask_play_again()
         play_again = retrieve_yes_or_no()
